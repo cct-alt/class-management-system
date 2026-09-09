@@ -1,4 +1,4 @@
-// ⚠️ 請在此處貼上您剛才從 Google Apps Script 複製的 Web App URL
+// ⚠️ 請在此處貼上您從 Google Apps Script 複製的 Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
 
 let currentClass = "";
@@ -33,7 +33,9 @@ function goBack() {
     switchView("view-home");
   } else {
     switchView("view-menu");
-    document.getElementById("app-title").textContent = `${currentClass} 班級功能`;
+    // 智慧決定標題是否補上「班」字
+    const title = currentClass.includes('班') || currentClass.includes('生物') ? `${currentClass} 功能` : `${currentClass}班 功能`;
+    document.getElementById("app-title").textContent = title;
   }
 }
 
@@ -47,29 +49,44 @@ function showLoading(show) {
 // 首頁選擇班級
 async function selectClass(className) {
   currentClass = className;
-  // 💡【已修正】如果班級名稱本身沒有"班"，就自動補上
-  let title = className.includes('班') ? `${className} 功能` : `${className}班 功能`;
+  
+  // 智慧決定標題是否補上「班」字
+  const title = className.includes('班') || className.includes('生物') ? `${className} 功能` : `${className}班 功能`;
   document.getElementById("app-title").textContent = title;
+  
   showLoading(true);
   
   try {
     // 從 Google Sheet API 獲取該班級名單
     const response = await fetch(`${API_URL}?action=getStudents&className=${encodeURIComponent(className)}`);
-    studentList = await response.json();
+    const rawData = await response.json();
     
-    if (studentList.status === "error") {
-      alert("讀取失敗：" + studentList.message);
+    // 智慧安全防錯：確認回傳的是否為有效名單陣列
+    if (rawData && Array.isArray(rawData)) {
+      studentList = rawData;
+      switchView("view-menu");
+    } else if (rawData && rawData.status === "error") {
+      alert("讀取失敗：" + rawData.message);
       switchView("view-home");
     } else {
-      switchView("view-menu");
+      alert("讀取失敗：Google Sheet 回傳了空資料。請確認該 Sheet 內是否有學生名單。");
+      switchView("view-home");
     }
   } catch (error) {
     console.error(error);
-    alert("連線 Google Sheets 失敗，請確認 API URL 是否正確且已公開發布。");
+    alert("連線 Google Sheets 失敗，請確認 API URL 是否正確，且 Apps Script 已重新部署為「所有人(Anyone)」可以存取。");
     switchView("view-home");
   } finally {
     showLoading(false);
   }
+}
+
+// 獲取格式化後的學生顯示姓名，格式：4A (1) 陳小明 或 (1) 陳小明
+function getFormattedStudentName(student) {
+  if (!student) return "";
+  return student.origClass 
+    ? `${student.origClass} (${student.id}) ${student.name}` 
+    : `(${student.id}) ${student.name}`;
 }
 
 // 初始化檢查書本清單
@@ -78,16 +95,20 @@ function initBookCheck() {
   listContainer.innerHTML = "";
   
   if (studentList.length === 0) {
-    listContainer.innerHTML = `<p class="p-4 text-center text-slate-400">名單中沒有學生，請先在 Sheet 中輸入資料。</p>`;
+    listContainer.innerHTML = `<p class="p-4 text-center text-slate-400">名單中沒有學生，請先在 Google Sheet 中輸入資料。</p>`;
     return;
   }
 
   studentList.forEach(student => {
     const item = document.createElement("div");
     item.className = "flex items-center justify-between py-3 px-1";
+    
+    // 使用格式化後的姓名
+    const displayName = getFormattedStudentName(student);
+    
     item.innerHTML = `
       <div class="flex flex-col">
-        <span class="font-bold text-slate-700">${student.name}</span>
+        <span class="font-bold text-slate-700">${displayName}</span>
         <span class="text-xs text-slate-400">目前欠書：${student.noBook} 次 | 總分：${student.score}</span>
       </div>
       <input type="checkbox" data-name="${student.name}" class="book-checkbox w-6 h-6 text-amber-500 rounded-lg focus:ring-amber-400 focus:ring-2 border-slate-300">
@@ -174,11 +195,15 @@ function startDraw() {
       
       // 最終選中
       selectedStudent = tempSelected;
-      display.textContent = `🎯 ${selectedStudent.name}`;
-      display.className = "bg-yellow-100 border-2 border-yellow-400 h-48 rounded-2xl shadow-md flex items-center justify-center text-4xl font-black text-amber-700 transition-all scale-105 duration-300";
+      
+      // 使用自訂格式化姓名：例如 4A (1) 陳小明
+      const finalDisplayName = getFormattedStudentName(selectedStudent);
+      
+      display.textContent = `🎯 ${finalDisplayName}`;
+      display.className = "bg-yellow-100 border-2 border-yellow-400 h-48 rounded-2xl shadow-md flex items-center justify-center text-3xl font-black text-amber-700 transition-all scale-105 duration-300";
       
       // 顯示加減分按鈕
-      document.getElementById("selected-student-label").textContent = selectedStudent.name;
+      document.getElementById("selected-student-label").textContent = finalDisplayName;
       document.getElementById("lottery-actions").classList.remove("hidden");
       btnDraw.disabled = false;
     }
@@ -227,9 +252,13 @@ function openBatchAction(type, value, title) {
     const item = document.createElement("button");
     item.className = "w-full text-left flex justify-between items-center py-4 px-3 hover:bg-slate-50 transition-all border-b border-slate-100 active:bg-slate-100";
     item.onclick = () => submitSingleAction(student.name, type, value);
+    
+    // 使用格式化姓名
+    const displayName = getFormattedStudentName(student);
+    
     item.innerHTML = `
       <div class="flex flex-col">
-        <span class="font-bold text-slate-700 text-lg">${student.name}</span>
+        <span class="font-bold text-slate-700 text-lg">${displayName}</span>
         <span class="text-xs text-slate-400">目前總分：${student.score} </span>
       </div>
       <span class="${value > 0 ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50'} px-3 py-1 rounded-full text-sm font-bold">
