@@ -47,7 +47,9 @@ function showLoading(show) {
 // 首頁選擇班級
 async function selectClass(className) {
   currentClass = className;
-  document.getElementById("app-title").textContent = `${className} 班級功能`;
+  // 💡【已修正】如果班級名稱本身沒有"班"，就自動補上
+  let title = className.includes('班') ? `${className} 功能` : `${className}班 功能`;
+  document.getElementById("app-title").textContent = title;
   showLoading(true);
   
   try {
