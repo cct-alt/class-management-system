@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Enterprise 課堂管理與抽籤系統</title>
+  <!-- 引入 Tailwind CSS 讓介面變美觀 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 FontAwesome 圖標 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* 簡單的抽籤跳動動畫 */
+    @keyframes pulse-fast {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); background-color: #fef08a; }
+    }
+    .lottery-active {
+      animation: pulse-fast 0.15s infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- 頂部導航欄 -->
+  <header class="bg-blue-600 text-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-graduation-cap text-2xl"></i>
+      <h1 class="text-xl font-bold tracking-wide" id="app-title">課堂管理系統</h1>
+    </div>
+    <button id="btn-back" class="hidden bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded-lg text-sm transition-all" onclick="goBack()">
+      <i class="fa-solid fa-chevron-left mr-1"></i> 返回
+    </button>
+  </header>
+
+  <!-- 主要內容區域 -->
+  <main class="flex-grow p-4 max-w-md mx-auto w-full">
+    
+    <!-- 讀取中遮罩 -->
+    <div id="loading" class="hidden fixed inset-0 bg-black/50 z-50 flex flex-col justify-center items-center text-white">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-blue-500 border-white/20 mb-4"></div>
+      <p class="font-medium">同步 Google Sheets 中...</p>
+    </div>
+
+    <!-- 1. 班級選擇首頁 -->
+    <section id="view-home" class="space-y-6 py-4">
+      <div class="text-center">
+        <h2 class="text-lg font-medium text-slate-500">請選擇授課班別</h2>
+        <div class="h-1 w-12 bg-blue-500 mx-auto mt-2 rounded-full"></div>
+      </div>
+      <div class="grid grid-cols-1 gap-4">
+        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('1A')">
+          <span>1A 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
+        </button>
+        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3B')">
+          <span>3B 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
+        </button>
+        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3C')">
+          <span>3C 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
+        </button>
+        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3D')">
+          <span>3D 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
+        </button>
+        <button class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-6 rounded-2xl shadow-sm text-2xl font-bold flex justify-between items-center transition-all active:scale-95" onclick="selectClass('4X3生物')">
+          <span>4X3 生物</span> <i class="fa-solid fa-dna text-white/80"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. 班級主選單 -->
+    <section id="view-menu" class="hidden space-y-6 py-4">
+      <div class="grid grid-cols-2 gap-4">
+        <!-- 檢查書本 -->
+        <button class="bg-amber-500 hover:bg-amber-600 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="switchView('view-book')">
+          <i class="fa-solid fa-book text-3xl"></i>
+          <span class="font-bold text-lg">檢查書本</span>
+        </button>
+        <!-- 抽籤系統 -->
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="initLottery()">
+          <i class="fa-solid fa-dice text-3xl animate-bounce"></i>
+          <span class="font-bold text-lg">課堂抽籤</span>
+        </button>
+        <!-- 扣分 -->
+        <button class="bg-rose-500 hover:bg-rose-600 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="openBatchAction('score', -1, '扣分處理')">
+          <i class="fa-solid fa-circle-minus text-3xl"></i>
+          <span class="font-bold text-lg">快速扣分</span>
+        </button>
+        <!-- 加分 -->
+        <button class="bg-emerald-500 hover:bg-emerald-600 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="openBatchAction('score', 1, '表現加分')">
+          <i class="fa-solid fa-circle-plus text-3xl"></i>
+          <span class="font-bold text-lg">表現加分</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 功能：檢查書本 -->
+    <section id="view-book" class="hidden space-y-4 py-2">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+        <p class="text-sm text-slate-500 mb-3"><i class="fa-solid fa-info-circle mr-1"></i> 請勾選【今天沒有帶書】的同學：</p>
+        <div id="book-student-list" class="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
+          <!-- 學生清單會由 JS 自動生成 -->
+        </div>
+      </div>
+      <button class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-md transition-all active:scale-95" onclick="submitBookCheck()">
+        <i class="fa-solid fa-check-double mr-1"></i> 儲存沒帶書紀錄 (-1分)
+      </button>
+    </section>
+
+    <!-- 4. 功能：抽籤系統 -->
+    <section id="view-lottery" class="hidden space-y-6 py-4">
+      <!-- 顯示抽中名字的螢幕 -->
+      <div id="lottery-display" class="bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-4xl font-black text-indigo-600 transition-all">
+        準備抽籤...
+      </div>
+      
+      <!-- 抽籤控制按鈕 -->
+      <button id="btn-draw" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold text-xl shadow-md tracking-wider transition-all active:scale-95" onclick="startDraw()">
+        <i class="fa-solid fa-shuffle mr-1"></i> 開始隨機抽籤
+      </button>
+
+      <!-- 抽中後的快速計分板 -->
+      <div id="lottery-actions" class="hidden bg-slate-100 p-4 rounded-xl space-y-3">
+        <p class="text-center text-sm text-slate-500">針對被抽中學生 <strong id="selected-student-label" class="text-slate-800"></strong> 進行快速加扣分：</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', 2)">
+            <i class="fa-solid fa-thumbs-up mr-1"></i> 答對問題 (+2分)
+          </button>
+          <button class="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', -1)">
+            <i class="fa-solid fa-times mr-1"></i> 答錯/未帶 (-1分)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 功能：快速加扣分名單選擇 -->
+    <section id="view-batch" class="hidden space-y-4 py-2">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+        <p id="batch-desc" class="text-sm text-slate-500 mb-3"></p>
+        <div id="batch-student-list" class="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
+          <!-- 學生清單會由 JS 自動生成 -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center p-4 text-xs text-slate-400 bg-white border-t border-slate-100">
+    Gemini Enterprise 課堂教學助手 &copy; 2026
+  </footer>
+
+  <!-- 引入邏輯控制 JS -->
+  <script src="script.js"></script>
+</body>
+</html>
