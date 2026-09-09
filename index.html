@@ -9,21 +9,36 @@
   <!-- 引入 FontAwesome 圖標 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* 簡單的抽籤跳動動畫 */
-    @keyframes pulse-fast {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); background-color: #fef08a; }
+    /* 💡【全新】抽籤動畫：閃爍、震動、變色，營造緊張感！ */
+    @keyframes lottery-intense {
+      0% { transform: scale(1) translateX(0); color: #ef4444; } /* red-500 */
+      25% { transform: scale(1.05) translateX(-2px); color: #f97316; } /* orange-500 */
+      50% { transform: scale(1) translateX(0); color: #84cc16; } /* lime-500 */
+      75% { transform: scale(1.05) translateX(2px); color: #3b82f6; } /* blue-500 */
+      100% { transform: scale(1) translateX(0); color: #8b5cf6; } /* violet-500 */
     }
     .lottery-active {
-      animation: pulse-fast 0.15s infinite;
+      animation: lottery-intense 0.1s infinite;
+      border-style: solid !important;
+      border-color: #eab308 !important; /* yellow-500 */
+    }
+    
+    /* 💡【全新】抽中揭曉動畫 */
+    @keyframes lottery-reveal {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      70% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .lottery-revealed {
+      animation: lottery-reveal 0.4s ease-out;
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
   <!-- 頂部導航欄 -->
-  <header class="bg-blue-600 text-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
-    <div class="flex items-center space-x-2">
+  <header class="bg-blue-600 text-white shadow-lg p-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
       <i class="fa-solid fa-graduation-cap text-2xl"></i>
       <h1 class="text-xl font-bold tracking-wide" id="app-title">課堂管理系統</h1>
     </div>
@@ -32,13 +47,13 @@
     </button>
   </header>
 
-  <!-- 主要內容區域 -->
-  <main class="flex-grow p-4 max-w-md mx-auto w-full">
+  <!-- 主要內容區域 (💡 加大寬度以適應 iPad) -->
+  <main class="flex-grow p-4 max-w-lg mx-auto w-full">
     
     <!-- 讀取中遮罩 -->
-    <div id="loading" class="hidden fixed inset-0 bg-black/50 z-50 flex flex-col justify-center items-center text-white">
+    <div id="loading" class="hidden fixed inset-0 bg-black/60 z-50 flex flex-col justify-center items-center text-white backdrop-blur-sm">
       <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-blue-500 border-white/20 mb-4"></div>
-      <p class="font-medium">同步 Google Sheets 中...</p>
+      <p class="font-medium text-lg">同步 Google Sheets 中...</p>
     </div>
 
     <!-- 1. 班級選擇首頁 -->
@@ -48,19 +63,19 @@
         <div class="h-1 w-12 bg-blue-500 mx-auto mt-2 rounded-full"></div>
       </div>
       <div class="grid grid-cols-1 gap-4">
-        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('1A')">
+        <button class="bg-white hover:bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-md text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('1A')">
           <span>1A 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
         </button>
-        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3B')">
+        <button class="bg-white hover:bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-md text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3B')">
           <span>3B 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
         </button>
-        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3C')">
+        <button class="bg-white hover:bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-md text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3C')">
           <span>3C 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
         </button>
-        <button class="bg-white hover:bg-slate-100 border border-slate-200 p-6 rounded-2xl shadow-sm text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3D')">
+        <button class="bg-white hover:bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-md text-2xl font-bold text-blue-600 flex justify-between items-center transition-all active:scale-95" onclick="selectClass('3D')">
           <span>3D 班</span> <i class="fa-solid fa-circle-chevron-right text-slate-400"></i>
         </button>
-        <button class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-6 rounded-2xl shadow-sm text-2xl font-bold flex justify-between items-center transition-all active:scale-95" onclick="selectClass('4X3生物')">
+        <button class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-6 rounded-2xl shadow-md text-2xl font-bold flex justify-between items-center transition-all active:scale-95" onclick="selectClass('4X3生物')">
           <span>4X3 生物</span> <i class="fa-solid fa-dna text-white/80"></i>
         </button>
       </div>
@@ -68,39 +83,39 @@
 
     <!-- 2. 班級主選單 -->
     <section id="view-menu" class="hidden space-y-6 py-4">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-5">
         <!-- 檢查書本 -->
-        <button class="bg-amber-500 hover:bg-amber-600 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="switchView('view-book')">
-          <i class="fa-solid fa-book text-3xl"></i>
-          <span class="font-bold text-lg">檢查書本</span>
+        <button class="bg-amber-500 hover:bg-amber-600 text-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="switchView('view-book')">
+          <i class="fa-solid fa-book text-4xl"></i>
+          <span class="font-bold text-xl">檢查書本</span>
         </button>
         <!-- 抽籤系統 -->
-        <button class="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="initLottery()">
-          <i class="fa-solid fa-dice text-3xl animate-bounce"></i>
-          <span class="font-bold text-lg">課堂抽籤</span>
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="initLottery()">
+          <i class="fa-solid fa-dice text-4xl animate-bounce"></i>
+          <span class="font-bold text-xl">課堂抽籤</span>
         </button>
         <!-- 扣分 -->
-        <button class="bg-rose-500 hover:bg-rose-600 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="openBatchAction('score', -1, '扣分處理')">
-          <i class="fa-solid fa-circle-minus text-3xl"></i>
-          <span class="font-bold text-lg">快速扣分</span>
+        <button class="bg-rose-500 hover:bg-rose-600 text-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="openBatchAction('score', -1, '扣分處理')">
+          <i class="fa-solid fa-circle-minus text-4xl"></i>
+          <span class="font-bold text-xl">快速扣分</span>
         </button>
         <!-- 加分 -->
-        <button class="bg-emerald-500 hover:bg-emerald-600 text-white p-6 rounded-2xl shadow-md flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="openBatchAction('score', 1, '表現加分')">
-          <i class="fa-solid fa-circle-plus text-3xl"></i>
-          <span class="font-bold text-lg">表現加分</span>
+        <button class="bg-emerald-500 hover:bg-emerald-600 text-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center space-y-3 transition-all active:scale-95" onclick="openBatchAction('score', 1, '表現加分')">
+          <i class="fa-solid fa-circle-plus text-4xl"></i>
+          <span class="font-bold text-xl">表現加分</span>
         </button>
       </div>
     </section>
 
     <!-- 3. 功能：檢查書本 -->
     <section id="view-book" class="hidden space-y-4 py-2">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-        <p class="text-sm text-slate-500 mb-3"><i class="fa-solid fa-info-circle mr-1"></i> 請勾選【今天沒有帶書】的同學：</p>
-        <div id="book-student-list" class="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
+      <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-200">
+        <p class="text-base text-slate-500 mb-3"><i class="fa-solid fa-info-circle mr-1"></i> 請勾選【今天沒有帶書】的同學：</p>
+        <div id="book-student-list" class="divide-y divide-slate-200 max-h-[60vh] overflow-y-auto">
           <!-- 學生清單會由 JS 自動生成 -->
         </div>
       </div>
-      <button class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-md transition-all active:scale-95" onclick="submitBookCheck()">
+      <button class="w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-xl font-bold text-lg shadow-md transition-all active:scale-95" onclick="submitBookCheck()">
         <i class="fa-solid fa-check-double mr-1"></i> 儲存沒帶書紀錄 (-1分)
       </button>
     </section>
@@ -108,25 +123,25 @@
     <!-- 4. 功能：抽籤系統 -->
     <section id="view-lottery" class="hidden space-y-6 py-4">
       <!-- 顯示抽中名字的螢幕 -->
-      <div id="lottery-display" class="bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-2xl font-black text-indigo-600 transition-all text-center px-4">
+      <div id="lottery-display" class="bg-white border-2 border-dashed border-indigo-300 h-56 rounded-2xl shadow-inner flex items-center justify-center text-3xl font-black text-indigo-600 transition-all text-center px-4">
         準備抽籤...
       </div>
       
       <!-- 抽籤控制按鈕 -->
-      <button id="btn-draw" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold text-xl shadow-md tracking-wider transition-all active:scale-95" onclick="startDraw()">
-        <i class="fa-solid fa-shuffle mr-1"></i> 開始隨機抽籤
+      <button id="btn-draw" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-xl font-bold text-2xl shadow-lg tracking-wider transition-all active:scale-95 disabled:bg-slate-400" onclick="startDraw()">
+        <i class="fa-solid fa-shuffle mr-2"></i> 開始隨機抽籤
       </button>
 
       <!-- 抽中後的快速計分板 -->
-      <div id="lottery-actions" class="hidden bg-slate-100 p-4 rounded-xl space-y-3">
-        <p class="text-center text-sm text-slate-500">針對被抽中學生 <strong id="selected-student-label" class="text-slate-800"></strong> 進行快速評分：</p>
+      <div id="lottery-actions" class="hidden bg-slate-200 p-4 rounded-xl space-y-3">
+        <p class="text-center text-base text-slate-600">針對被抽中學生 <strong id="selected-student-label" class="text-slate-800"></strong> 進行快速評分：</p>
         <div class="grid grid-cols-2 gap-3">
-          <!-- 💡 答對改為 +1分 -->
-          <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', 1)">
+          <!-- 答對改為 +1分 -->
+          <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-bold text-lg transition-all active:scale-95" onclick="actionSelectedStudent('score', 1)">
             <i class="fa-solid fa-thumbs-up mr-1"></i> 答對問題 (+1分)
           </button>
-          <!-- 💡 移除未帶，僅保留答錯 -->
-          <button class="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', -1)">
+          <!-- 移除未帶，僅保留答錯 -->
+          <button class="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-lg font-bold text-lg transition-all active:scale-95" onclick="actionSelectedStudent('score', -1)">
             <i class="fa-solid fa-times mr-1"></i> 答錯 (-1分)
           </button>
         </div>
@@ -135,9 +150,9 @@
 
     <!-- 5. 功能：快速加扣分名單選擇 -->
     <section id="view-batch" class="hidden space-y-4 py-2">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-        <p id="batch-desc" class="text-sm text-slate-500 mb-3"></p>
-        <div id="batch-student-list" class="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
+      <div class="bg-white p-4 rounded-xl shadow-lg border border-slate-200">
+        <p id="batch-desc" class="text-base text-slate-500 mb-3"></p>
+        <div id="batch-student-list" class="divide-y divide-slate-200 max-h-[60vh] overflow-y-auto">
           <!-- 學生清單會由 JS 自動生成 -->
         </div>
       </div>
@@ -145,7 +160,7 @@
 
   </main>
 
-  <footer class="text-center p-4 text-xs text-slate-400 bg-white border-t border-slate-100">
+  <footer class="text-center p-4 text-sm text-slate-400 bg-white border-t border-slate-200">
     Gemini Enterprise 課堂教學助手 &copy; 2026
   </footer>
 

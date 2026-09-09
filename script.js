@@ -13,7 +13,6 @@ function switchView(viewId) {
   });
   document.getElementById(viewId).classList.remove("hidden");
   
-  // 顯示/隱藏頂部返回按鈕
   const btnBack = document.getElementById("btn-back");
   if (viewId === "view-home") {
     btnBack.classList.add("hidden");
@@ -33,7 +32,6 @@ function goBack() {
     switchView("view-home");
   } else {
     switchView("view-menu");
-    // 智慧決定標題是否補上「班」字
     const title = currentClass.includes('班') || currentClass.includes('生物') ? `${currentClass} 功能` : `${currentClass}班 功能`;
     document.getElementById("app-title").textContent = title;
   }
@@ -50,18 +48,15 @@ function showLoading(show) {
 async function selectClass(className) {
   currentClass = className;
   
-  // 智慧決定標題是否補上「班」字
   const title = className.includes('班') || className.includes('生物') ? `${className} 功能` : `${className}班 功能`;
   document.getElementById("app-title").textContent = title;
   
   showLoading(true);
   
   try {
-    // 從 Google Sheet API 獲取該班級名單
     const response = await fetch(`${API_URL}?action=getStudents&className=${encodeURIComponent(className)}`);
     const rawData = await response.json();
     
-    // 智慧安全防錯：確認回傳的是否為有效名單陣列
     if (rawData && Array.isArray(rawData)) {
       studentList = rawData;
       switchView("view-menu");
@@ -81,7 +76,7 @@ async function selectClass(className) {
   }
 }
 
-// 獲取格式化後的學生顯示姓名，格式：4A (1) 陳小明 或 (1) 陳小明
+// 獲取格式化後的學生顯示姓名
 function getFormattedStudentName(student) {
   if (!student) return "";
   return student.origClass 
@@ -101,23 +96,22 @@ function initBookCheck() {
 
   studentList.forEach(student => {
     const item = document.createElement("div");
-    item.className = "flex items-center justify-between py-3 px-1";
+    item.className = "flex items-center justify-between py-4 px-2";
     
-    // 使用格式化後的姓名
     const displayName = getFormattedStudentName(student);
     
     item.innerHTML = `
       <div class="flex flex-col">
-        <span class="font-bold text-slate-700">${displayName}</span>
-        <span class="text-xs text-slate-400">目前欠書：${student.noBook} 次 | 總分：${student.score}</span>
+        <span class="font-bold text-slate-700 text-lg">${displayName}</span>
+        <span class="text-xs text-slate-500">目前欠書：${student.noBook} 次 | 總分：${student.score}</span>
       </div>
-      <input type="checkbox" data-name="${student.name}" class="book-checkbox w-6 h-6 text-amber-500 rounded-lg focus:ring-amber-400 focus:ring-2 border-slate-300">
+      <input type="checkbox" data-name="${student.name}" class="book-checkbox w-7 h-7 text-amber-500 rounded-lg focus:ring-amber-400 focus:ring-2 border-slate-300">
     `;
     listContainer.appendChild(item);
   });
 }
 
-// 提交檢查書本紀錄 (送出給沒帶書的人，扣一分)
+// 提交檢查書本紀錄
 async function submitBookCheck() {
   const checkboxes = document.querySelectorAll(".book-checkbox:checked");
   if (checkboxes.length === 0) {
@@ -139,7 +133,7 @@ async function submitBookCheck() {
           className: currentClass,
           studentName: name,
           type: "book",
-          value: 1 // 沒帶書次數 +1
+          value: 1
         })
       });
       const result = await res.json();
@@ -151,20 +145,21 @@ async function submitBookCheck() {
 
   showLoading(false);
   alert(`成功儲存！已為 ${successCount} 位同學登記沒帶書並扣分。`);
-  selectClass(currentClass); // 重新載入最新數據
+  selectClass(currentClass);
 }
 
 // 初始化抽籤介面
 function initLottery() {
   selectedStudent = null;
-  document.getElementById("lottery-display").textContent = "準備抽籤...";
-  document.getElementById("lottery-display").className = "bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-2xl font-black text-indigo-600 transition-all text-center px-4";
+  const display = document.getElementById("lottery-display");
+  display.textContent = "準備抽籤...";
+  display.className = "bg-white border-2 border-dashed border-indigo-300 h-56 rounded-2xl shadow-inner flex items-center justify-center text-3xl font-black text-indigo-600 transition-all text-center px-4";
   document.getElementById("lottery-actions").classList.add("hidden");
   document.getElementById("btn-draw").disabled = false;
   switchView("view-lottery");
 }
 
-// 執行抽籤動畫
+// 💡【全新】執行充滿緊張感的抽籤動畫
 function startDraw() {
   if (studentList.length === 0) {
     alert("班級名單中沒有學生！");
@@ -178,16 +173,14 @@ function startDraw() {
   display.classList.add("lottery-active");
   document.getElementById("lottery-actions").classList.add("hidden");
 
-  let duration = 2000; // 滾動動畫持續2秒
-  let intervalTime = 80; // 每 80 毫秒換一個名字
+  let duration = 2500; // 動畫總時長（2.5秒）
+  let intervalTime = 60; // 名字閃爍速度（毫秒）
   let elapsed = 0;
-  let tempSelected = "";
-
+  
   const timer = setInterval(() => {
     const randomIndex = Math.floor(Math.random() * studentList.length);
-    tempSelected = studentList[randomIndex];
+    const tempSelected = studentList[randomIndex];
     
-    // 💡【已更新】讓滾動中的名字也套用格式化 (例如：4A (1) 陳大文)
     display.textContent = getFormattedStudentName(tempSelected);
     elapsed += intervalTime;
 
@@ -195,16 +188,14 @@ function startDraw() {
       clearInterval(timer);
       display.classList.remove("lottery-active");
       
-      // 最終選中
-      selectedStudent = tempSelected;
-      
-      // 使用自訂格式化姓名：例如 4A (1) 陳小明
+      const finalIndex = Math.floor(Math.random() * studentList.length);
+      selectedStudent = studentList[finalIndex];
       const finalDisplayName = getFormattedStudentName(selectedStudent);
       
+      // 最終揭曉效果
       display.textContent = `🎯 ${finalDisplayName}`;
-      display.className = "bg-yellow-100 border-2 border-yellow-400 h-48 rounded-2xl shadow-md flex items-center justify-center text-2xl font-black text-amber-700 transition-all scale-105 duration-300 text-center px-4";
+      display.className = "lottery-revealed bg-yellow-300 border-2 border-yellow-500 h-56 rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-amber-800 transition-all text-center px-4";
       
-      // 顯示加減分按鈕
       document.getElementById("selected-student-label").textContent = finalDisplayName;
       document.getElementById("lottery-actions").classList.remove("hidden");
       btnDraw.disabled = false;
@@ -230,9 +221,8 @@ async function actionSelectedStudent(type, value) {
     const result = await res.json();
     if (result.status === "success") {
       alert(`已為 ${selectedStudent.name} 登記：${value > 0 ? '+' : ''}${value}分！`);
-      // 重新加載本班數據
       await selectClass(currentClass);
-      initLottery(); // 重設抽籤畫面
+      initLottery();
     } else {
       alert("儲存失敗：" + result.message);
     }
@@ -252,18 +242,17 @@ function openBatchAction(type, value, title) {
   
   studentList.forEach(student => {
     const item = document.createElement("button");
-    item.className = "w-full text-left flex justify-between items-center py-4 px-3 hover:bg-slate-50 transition-all border-b border-slate-100 active:bg-slate-100";
+    item.className = "w-full text-left flex justify-between items-center py-4 px-3 hover:bg-slate-100 transition-all border-b border-slate-200 active:bg-slate-200";
     item.onclick = () => submitSingleAction(student.name, type, value);
     
-    // 使用格式化姓名
     const displayName = getFormattedStudentName(student);
     
     item.innerHTML = `
       <div class="flex flex-col">
         <span class="font-bold text-slate-700 text-lg">${displayName}</span>
-        <span class="text-xs text-slate-400">目前總分：${student.score} </span>
+        <span class="text-xs text-slate-500">目前總分：${student.score} </span>
       </div>
-      <span class="${value > 0 ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50'} px-3 py-1 rounded-full text-sm font-bold">
+      <span class="${value > 0 ? 'text-emerald-500 bg-emerald-100' : 'text-rose-500 bg-rose-100'} px-3 py-1 rounded-full text-sm font-bold">
         ${value > 0 ? '+' : ''}${value} 分
       </span>
     `;
@@ -291,8 +280,7 @@ async function submitSingleAction(name, type, value) {
     const result = await res.json();
     if (result.status === "success") {
       alert("儲存成功！");
-      await selectClass(currentClass); // 更新本地名單
-      // 重新渲染當前加扣分畫面
+      await selectClass(currentClass);
       openBatchAction(type, value, value > 0 ? '表現加分' : '扣分處理');
     } else {
       alert("儲存失敗：" + result.message);
@@ -307,7 +295,6 @@ async function submitSingleAction(name, type, value) {
 
 // 監聽按鈕點擊，用來優化「檢查書本」等按鈕的畫面初始渲染
 document.addEventListener("DOMContentLoaded", () => {
-  // 當點擊檢查書本，載入清單
   const btnBookView = document.querySelector('[onclick="switchView(\'view-book\')"]');
   if (btnBookView) {
     btnBookView.addEventListener("click", () => {
