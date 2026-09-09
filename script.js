@@ -1,5 +1,5 @@
 // ⚠️ 請在此處貼上您從 Google Apps Script 複製的 Web App URL
-const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
+const API_URL = "YOUR_WEB_APP_URL"; 
 
 let currentClass = "";
 let studentList = []; // 存放當前班級的學生資料
@@ -158,7 +158,7 @@ async function submitBookCheck() {
 function initLottery() {
   selectedStudent = null;
   document.getElementById("lottery-display").textContent = "準備抽籤...";
-  document.getElementById("lottery-display").className = "bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-4xl font-black text-indigo-600 transition-all";
+  document.getElementById("lottery-display").className = "bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-2xl font-black text-indigo-600 transition-all text-center px-4";
   document.getElementById("lottery-actions").classList.add("hidden");
   document.getElementById("btn-draw").disabled = false;
   switchView("view-lottery");
@@ -186,7 +186,9 @@ function startDraw() {
   const timer = setInterval(() => {
     const randomIndex = Math.floor(Math.random() * studentList.length);
     tempSelected = studentList[randomIndex];
-    display.textContent = tempSelected.name;
+    
+    // 💡【已更新】讓滾動中的名字也套用格式化 (例如：4A (1) 陳大文)
+    display.textContent = getFormattedStudentName(tempSelected);
     elapsed += intervalTime;
 
     if (elapsed >= duration) {
@@ -200,7 +202,7 @@ function startDraw() {
       const finalDisplayName = getFormattedStudentName(selectedStudent);
       
       display.textContent = `🎯 ${finalDisplayName}`;
-      display.className = "bg-yellow-100 border-2 border-yellow-400 h-48 rounded-2xl shadow-md flex items-center justify-center text-3xl font-black text-amber-700 transition-all scale-105 duration-300";
+      display.className = "bg-yellow-100 border-2 border-yellow-400 h-48 rounded-2xl shadow-md flex items-center justify-center text-2xl font-black text-amber-700 transition-all scale-105 duration-300 text-center px-4";
       
       // 顯示加減分按鈕
       document.getElementById("selected-student-label").textContent = finalDisplayName;

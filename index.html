@@ -108,7 +108,7 @@
     <!-- 4. 功能：抽籤系統 -->
     <section id="view-lottery" class="hidden space-y-6 py-4">
       <!-- 顯示抽中名字的螢幕 -->
-      <div id="lottery-display" class="bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-4xl font-black text-indigo-600 transition-all">
+      <div id="lottery-display" class="bg-white border-2 border-dashed border-indigo-300 h-48 rounded-2xl shadow-inner flex items-center justify-center text-2xl font-black text-indigo-600 transition-all text-center px-4">
         準備抽籤...
       </div>
       
@@ -119,13 +119,15 @@
 
       <!-- 抽中後的快速計分板 -->
       <div id="lottery-actions" class="hidden bg-slate-100 p-4 rounded-xl space-y-3">
-        <p class="text-center text-sm text-slate-500">針對被抽中學生 <strong id="selected-student-label" class="text-slate-800"></strong> 進行快速加扣分：</p>
+        <p class="text-center text-sm text-slate-500">針對被抽中學生 <strong id="selected-student-label" class="text-slate-800"></strong> 進行快速評分：</p>
         <div class="grid grid-cols-2 gap-3">
-          <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', 2)">
-            <i class="fa-solid fa-thumbs-up mr-1"></i> 答對問題 (+2分)
+          <!-- 💡 答對改為 +1分 -->
+          <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', 1)">
+            <i class="fa-solid fa-thumbs-up mr-1"></i> 答對問題 (+1分)
           </button>
+          <!-- 💡 移除未帶，僅保留答錯 -->
           <button class="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-lg font-bold transition-all active:scale-95" onclick="actionSelectedStudent('score', -1)">
-            <i class="fa-solid fa-times mr-1"></i> 答錯/未帶 (-1分)
+            <i class="fa-solid fa-times mr-1"></i> 答錯 (-1分)
           </button>
         </div>
       </div>
