@@ -1,5 +1,5 @@
 // ⚠️ 請在此處貼上您從 Google Apps Script 複製的 Web App URL
-const API_URL = "YOUR_WEB_APP_URL"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
 
 let currentClass = "";
 let studentList = []; // 存放當前班級的學生資料
@@ -100,10 +100,11 @@ function initBookCheck() {
     
     const displayName = getFormattedStudentName(student);
     
+    // 💡【已更新】移除總分顯示，只保留欠書次數
     item.innerHTML = `
       <div class="flex flex-col">
         <span class="font-bold text-slate-700 text-lg">${displayName}</span>
-        <span class="text-xs text-slate-500">目前欠書：${student.noBook} 次 | 總分：${student.score}</span>
+        <span class="text-xs text-slate-500">目前欠書：${student.noBook} 次</span>
       </div>
       <input type="checkbox" data-name="${student.name}" class="book-checkbox w-7 h-7 text-amber-500 rounded-lg focus:ring-amber-400 focus:ring-2 border-slate-300">
     `;
@@ -173,15 +174,14 @@ function startDraw() {
   display.classList.add("lottery-active");
   document.getElementById("lottery-actions").classList.add("hidden");
 
-  let duration = 2500; // 動畫總時長（2.5秒）
-  let intervalTime = 60; // 名字閃爍速度（毫秒）
+  let duration = 2500;
+  let intervalTime = 60;
   let elapsed = 0;
   
   const timer = setInterval(() => {
     const randomIndex = Math.floor(Math.random() * studentList.length);
     const tempSelected = studentList[randomIndex];
     
-    // 💡【已修正】讓滾動中的名字也套用完整格式 (例如：4A (1) 陳大文)
     display.textContent = getFormattedStudentName(tempSelected);
     elapsed += intervalTime;
 
@@ -193,7 +193,6 @@ function startDraw() {
       selectedStudent = studentList[finalIndex];
       const finalDisplayName = getFormattedStudentName(selectedStudent);
       
-      // 最終揭曉效果
       display.textContent = `🎯 ${finalDisplayName}`;
       display.className = "lottery-revealed bg-yellow-300 border-2 border-yellow-500 h-56 rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-amber-800 transition-all text-center px-4";
       
@@ -207,6 +206,13 @@ function startDraw() {
 // 抽籤快速評分按鈕動作
 async function actionSelectedStudent(type, value) {
   if (!selectedStudent) return;
+  
+  // 💡【已更新】如果 value 是 0 (即答錯不扣分)，則不呼叫後端 API，直接重置畫面
+  if (value === 0) {
+    alert(`已記錄 ${selectedStudent.name} 的作答情況。`);
+    initLottery(); // 直接重置抽籤畫面
+    return;
+  }
   
   showLoading(true);
   try {
@@ -248,10 +254,10 @@ function openBatchAction(type, value, title) {
     
     const displayName = getFormattedStudentName(student);
     
+    // 💡【已更新】移除總分顯示，讓版面更簡潔
     item.innerHTML = `
       <div class="flex flex-col">
         <span class="font-bold text-slate-700 text-lg">${displayName}</span>
-        <span class="text-xs text-slate-500">目前總分：${student.score} </span>
       </div>
       <span class="${value > 0 ? 'text-emerald-500 bg-emerald-100' : 'text-rose-500 bg-rose-100'} px-3 py-1 rounded-full text-sm font-bold">
         ${value > 0 ? '+' : ''}${value} 分
@@ -294,7 +300,7 @@ async function submitSingleAction(name, type, value) {
   }
 }
 
-// 監聽按鈕點擊，用來優化「檢查書本」等按鈕的畫面初始渲染
+// 監聽按鈕點擊
 document.addEventListener("DOMContentLoaded", () => {
   const btnBookView = document.querySelector('[onclick="switchView(\'view-book\')"]');
   if (btnBookView) {

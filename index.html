@@ -9,7 +9,7 @@
   <!-- 引入 FontAwesome 圖標 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* 💡【全新】抽籤動畫：閃爍、震動、變色，營造緊張感！ */
+    /* 抽籤動畫：閃爍、震動、變色，營造緊張感！ */
     @keyframes lottery-intense {
       0% { transform: scale(1) translateX(0); color: #ef4444; } /* red-500 */
       25% { transform: scale(1.05) translateX(-2px); color: #f97316; } /* orange-500 */
@@ -23,7 +23,7 @@
       border-color: #eab308 !important; /* yellow-500 */
     }
     
-    /* 💡【全新】抽中揭曉動畫 */
+    /* 抽中揭曉動畫 */
     @keyframes lottery-reveal {
       0% { transform: scale(0.8); opacity: 0.5; }
       70% { transform: scale(1.1); opacity: 1; }
@@ -47,7 +47,7 @@
     </button>
   </header>
 
-  <!-- 主要內容區域 (💡 加大寬度以適應 iPad) -->
+  <!-- 主要內容區域 (加大寬度以適應 iPad) -->
   <main class="flex-grow p-4 max-w-lg mx-auto w-full">
     
     <!-- 讀取中遮罩 -->
@@ -136,13 +136,13 @@
       <div id="lottery-actions" class="hidden bg-slate-200 p-4 rounded-xl space-y-3">
         <p class="text-center text-base text-slate-600">針對被抽中學生 <strong id="selected-student-label" class="text-slate-800"></strong> 進行快速評分：</p>
         <div class="grid grid-cols-2 gap-3">
-          <!-- 答對改為 +1分 -->
+          <!-- 答對為 +1分 -->
           <button class="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-bold text-lg transition-all active:scale-95" onclick="actionSelectedStudent('score', 1)">
             <i class="fa-solid fa-thumbs-up mr-1"></i> 答對問題 (+1分)
           </button>
-          <!-- 移除未帶，僅保留答錯 -->
-          <button class="bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-lg font-bold text-lg transition-all active:scale-95" onclick="actionSelectedStudent('score', -1)">
-            <i class="fa-solid fa-times mr-1"></i> 答錯 (-1分)
+          <!-- 💡【已更新】答錯不扣分(value=0)，並更新文字 -->
+          <button class="bg-slate-400 hover:bg-slate-500 text-white py-3 rounded-lg font-bold text-lg transition-all active:scale-95" onclick="actionSelectedStudent('score', 0)">
+            <i class="fa-solid fa-times mr-1"></i> 答錯
           </button>
         </div>
       </div>
