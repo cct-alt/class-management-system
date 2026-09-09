@@ -1,5 +1,5 @@
 // ⚠️ 請在此處貼上您從 Google Apps Script 複製的 Web App URL
-const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
+const API_URL = "YOUR_WEB_APP_URL"; 
 
 let currentClass = "";
 let studentList = []; // 存放當前班級的學生資料
@@ -159,7 +159,7 @@ function initLottery() {
   switchView("view-lottery");
 }
 
-// 💡【全新】執行充滿緊張感的抽籤動畫
+// 執行充滿緊張感的抽籤動畫
 function startDraw() {
   if (studentList.length === 0) {
     alert("班級名單中沒有學生！");
@@ -181,6 +181,7 @@ function startDraw() {
     const randomIndex = Math.floor(Math.random() * studentList.length);
     const tempSelected = studentList[randomIndex];
     
+    // 💡【已修正】讓滾動中的名字也套用完整格式 (例如：4A (1) 陳大文)
     display.textContent = getFormattedStudentName(tempSelected);
     elapsed += intervalTime;
 
