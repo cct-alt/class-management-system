@@ -1,5 +1,5 @@
 // ⚠️ 請在此處貼上您剛才從 Google Apps Script 複製的 Web App URL
-const API_URL = https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
 
 let currentClass = "";
 let studentList = []; // 存放當前班級的學生資料
