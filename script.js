@@ -1,5 +1,5 @@
 // ✅【已為您填寫】您的 Google Apps Script Web App 網址
-const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbx5K8m7YQfcDbPuY81zqGoQJ5U1gUgoSG1QTCyQyQq79Yv2c-Mw_thmqTyrkykXeKPz5Q/exec"; 
 
 let currentClass = "";
 let studentList = [];
