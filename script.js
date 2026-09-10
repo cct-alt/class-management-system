@@ -1,12 +1,13 @@
-// ✅【已為您填寫】您的 Google Apps Script Web App 網址
-const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
+// ✅【已為您填寫】您最新的 Google Apps Script Web App 網址
+const API_URL = "https://script.google.com/macros/s/AKfycbx5K8m7YQfcDbPuY81zqGoQJ5U1gUgoSG1QTCyQyQq79Yv2c-Mw_thmqTyrkykXeKPz5Q/exec"; 
 
 let currentClass = "";
 let studentList = [];
-let selectedStudent = null;
+let batchAction = { type: '', value: 0 }; // 儲存當前批次操作的類型和分數
 
+// 頁面切換控制
 function switchView(viewId) {
-    const views = ["view-home", "view-menu", "view-book", "view-lottery", "view-batch"];
+    const views = ["view-home", "view-menu", "view-lottery", "view-batch"];
     views.forEach(v => document.getElementById(v).classList.add("hidden"));
     document.getElementById(viewId).classList.remove("hidden");
     const btnBack = document.getElementById("btn-back");
@@ -18,21 +19,24 @@ function switchView(viewId) {
     }
 }
 
+// 返回按鈕
 function goBack() {
-    const currentVisible = ["view-menu", "view-book", "view-lottery", "view-batch"].find(id => !document.getElementById(id).classList.contains("hidden"));
-    if (currentVisible === "view-menu") {
-        switchView("view-home");
-    } else {
+    const currentVisible = ["view-menu", "view-lottery", "view-batch"].find(id => !document.getElementById(id).classList.contains("hidden"));
+    if (currentVisible) {
         switchView("view-menu");
         const title = currentClass.includes('班') || currentClass.includes('生物') ? `${currentClass} 功能` : `${currentClass}班 功能`;
         document.getElementById("app-title").textContent = title;
+    } else {
+        switchView("view-home");
     }
 }
 
+// 讀取遮罩
 function showLoading(show) {
     document.getElementById("loading").classList.toggle("hidden", !show);
 }
 
+// 選擇班級並獲取學生名單
 async function selectClass(className) {
     currentClass = className;
     const title = className.includes('班') || className.includes('生物') ? `${className} 功能` : `${className}班 功能`;
@@ -44,71 +48,100 @@ async function selectClass(className) {
         if (rawData && Array.isArray(rawData)) {
             studentList = rawData;
             switchView("view-menu");
-        } else if (rawData && rawData.status === "error") {
-            alert("讀取失敗：" + rawData.message);
-            switchView("view-home");
         } else {
-            alert("讀取失敗：Google Sheet 回傳了空資料。請確認該 Sheet 內是否有學生名單。");
+            alert("讀取失敗：" + (rawData.message || "Google Sheet 回傳的資料格式不正確或為空。"));
             switchView("view-home");
         }
     } catch (error) {
-        console.error(error);
-        alert("連線 Google Sheets 失敗，請確認 API URL 是否正確，且 Apps Script 已重新部署為「所有人(Anyone)」可以存取。");
+        alert(`連線 Google Sheets 失敗，請檢查 API URL 是否正確，且 Apps Script 已部署為「所有人」可存取。\n\n錯誤詳情: ${error.toString()}`);
         switchView("view-home");
     } finally {
         showLoading(false);
     }
 }
 
+// 格式化學生姓名顯示
 function getFormattedStudentName(student) {
     if (!student) return "";
     return student.origClass ? `${student.origClass} (${student.id}) ${student.name}` : `(${student.id}) ${student.name}`;
 }
 
-function initBookCheck() {
-    const listContainer = document.getElementById("book-student-list");
+// 💡【全新】開啟批次處理頁面 (整合了所有加減分與檢查書本)
+function openBatchAction(type, value, title) {
+    batchAction = { type, value };
+    
+    document.getElementById("batch-title").textContent = title;
+    const listContainer = document.getElementById("batch-student-list");
     listContainer.innerHTML = "";
-    if (studentList.length === 0) {
-        listContainer.innerHTML = `<p class="p-4 text-center text-slate-400">名單中沒有學生，請先在 Google Sheet 中輸入資料。</p>`;
-        return;
+    document.getElementById("event-desc").value = (type === 'book' ? '沒有帶書' : '');
+    document.getElementById("event-desc").readOnly = (type === 'book');
+
+    const submitBtn = document.getElementById("batch-submit-btn");
+    if (type === 'book') {
+        submitBtn.className = "w-full text-white py-4 rounded-xl font-bold text-lg shadow-md transition-all active:scale-95 bg-amber-500 hover:bg-amber-600";
+        submitBtn.innerHTML = `<i class="fa-solid fa-check-double mr-1"></i> 儲存沒帶書紀錄 (-1分)`;
+    } else if (value > 0) {
+        submitBtn.className = "w-full text-white py-4 rounded-xl font-bold text-lg shadow-md transition-all active:scale-95 bg-emerald-500 hover:bg-emerald-600";
+        submitBtn.innerHTML = `<i class="fa-solid fa-check-double mr-1"></i> 提交加分紀錄 (+${value}分)`;
+    } else {
+        submitBtn.className = "w-full text-white py-4 rounded-xl font-bold text-lg shadow-md transition-all active:scale-95 bg-rose-500 hover:bg-rose-600";
+        submitBtn.innerHTML = `<i class="fa-solid fa-check-double mr-1"></i> 提交扣分紀錄 (${value}分)`;
     }
+    
     studentList.forEach(student => {
         const item = document.createElement("div");
         item.className = "flex items-center justify-between py-4 px-2";
         const displayName = getFormattedStudentName(student);
         item.innerHTML = `
-      <div class="flex flex-col">
-        <span class="font-bold text-slate-700 text-lg">${displayName}</span>
-        <span class="text-xs text-slate-500">目前欠書：${student.noBook} 次</span>
-      </div>
-      <input type="checkbox" data-name="${student.name}" class="book-checkbox w-7 h-7 text-amber-500 rounded-lg focus:ring-amber-400 focus:ring-2 border-slate-300">
-    `;
+            <span class="font-bold text-slate-700 text-lg">${displayName}</span>
+            <input type="checkbox" data-name="${student.name}" class="batch-checkbox w-7 h-7 text-blue-600 rounded-lg focus:ring-blue-500 focus:ring-2 border-slate-300">
+        `;
         listContainer.appendChild(item);
     });
+
+    switchView("view-batch");
 }
 
-async function submitBookCheck() {
-    const checkboxes = document.querySelectorAll(".book-checkbox:checked");
-    if (checkboxes.length === 0) return alert("您沒有勾選任何沒帶書的同學！");
-    if (!confirm(`確定要為這 ${checkboxes.length} 位同學登記「沒帶書」並扣 1 分嗎？`)) return;
-    showLoading(true);
-    let successCount = 0;
-    for (let box of checkboxes) {
-        try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ className: currentClass, studentName: box.getAttribute("data-name"), type: "book", value: 1 })
-            });
-            const result = await res.json();
-            if (result.status === "success") successCount++;
-        } catch (e) { console.error(e); }
+// 💡【全新】提交批次操作
+async function submitBatchAction() {
+    const checkboxes = document.querySelectorAll(".batch-checkbox:checked");
+    if (checkboxes.length === 0) {
+        alert("您沒有勾選任何學生！");
+        return;
     }
-    showLoading(false);
-    // 💡【已更新】移除確認彈窗
-    // alert(`成功儲存！已為 ${successCount} 位同學登記沒帶書並扣分。`);
-    await selectClass(currentClass);
+    
+    const selectedNames = Array.from(checkboxes).map(cb => cb.getAttribute("data-name"));
+    const eventDesc = document.getElementById("event-desc").value.trim() || (batchAction.type === 'book' ? '沒有帶書' : '沒有描述');
+
+    if (!confirm(`確定要為這 ${selectedNames.length} 位同學執行「${document.getElementById("batch-title").textContent}」嗎？`)) return;
+
+    showLoading(true);
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                className: currentClass,
+                students: selectedNames,
+                eventDesc: eventDesc,
+                type: batchAction.type,
+                value: batchAction.value
+            })
+        });
+        const result = await res.json();
+        if (result.status === "success") {
+            switchView('view-menu'); // 成功後直接返回主選單
+        } else {
+            alert("儲存失敗：" + result.message);
+        }
+    } catch (e) {
+        alert("連線失敗！ " + e.toString());
+    } finally {
+        showLoading(false);
+    }
 }
 
+// 初始化抽籤介面
 function initLottery() {
     selectedStudent = null;
     const display = document.getElementById("lottery-display");
@@ -119,6 +152,7 @@ function initLottery() {
     switchView("view-lottery");
 }
 
+// 執行抽籤動畫
 function startDraw() {
     if (studentList.length === 0) return alert("班級名單中沒有學生！");
     const display = document.getElementById("lottery-display");
@@ -145,83 +179,37 @@ function startDraw() {
     }, intervalTime);
 }
 
-async function actionSelectedStudent(type, value) {
+// 抽籤快速評分按鈕動作
+async function actionSelectedStudent(type, value, eventDesc) {
     if (!selectedStudent) return;
+    
     if (value === 0) {
         initLottery();
         return;
     }
+
     showLoading(true);
     try {
         const res = await fetch(API_URL, {
             method: "POST",
-            body: JSON.stringify({ className: currentClass, studentName: selectedStudent.name, type, value })
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                className: currentClass,
+                students: [selectedStudent.name],
+                eventDesc: eventDesc,
+                type: type,
+                value: value
+            })
         });
         const result = await res.json();
         if (result.status === "success") {
-            // 💡【已更新】移除確認彈窗
-            // alert(`已為 ${selectedStudent.name} 登記：${value > 0 ? '+' : ''}${value}分！`);
-            await selectClass(currentClass);
             initLottery();
         } else {
             alert("儲存失敗：" + result.message);
         }
     } catch (e) {
-        alert("連線失敗！");
+        alert("連線失敗！ " + e.toString());
     } finally {
         showLoading(false);
     }
 }
-
-function openBatchAction(type, value, title) {
-    const listContainer = document.getElementById("batch-student-list");
-    document.getElementById("batch-desc").innerHTML = `<i class="fa-solid fa-hand-pointer mr-1"></i> 點擊下方同學，將直接進行 <strong>${title} (${value > 0 ? '+' : ''}${value}分)</strong>：`;
-    listContainer.innerHTML = "";
-    studentList.forEach(student => {
-        const item = document.createElement("button");
-        item.className = "w-full text-left flex justify-between items-center py-4 px-3 hover:bg-slate-100 transition-all border-b border-slate-200 active:bg-slate-200";
-        item.onclick = () => submitSingleAction(student.name, type, value);
-        const displayName = getFormattedStudentName(student);
-        item.innerHTML = `
-      <div class="flex flex-col">
-        <span class="font-bold text-slate-700 text-lg">${displayName}</span>
-      </div>
-      <span class="${value > 0 ? 'text-emerald-500 bg-emerald-100' : 'text-rose-500 bg-rose-100'} px-3 py-1 rounded-full text-sm font-bold">
-        ${value > 0 ? '+' : ''}${value} 分
-      </span>
-    `;
-        listContainer.appendChild(item);
-    });
-    switchView("view-batch");
-}
-
-async function submitSingleAction(name, type, value) {
-    if (!confirm(`確定要為 ${name} ${value > 0 ? '加' : '扣'} ${Math.abs(value)} 分嗎？`)) return;
-    showLoading(true);
-    try {
-        const res = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify({ className: currentClass, studentName: name, type, value })
-        });
-        const result = await res.json();
-        if (result.status === "success") {
-            // 💡【已更新】移除確認彈窗
-            // alert("儲存成功！");
-            await selectClass(currentClass);
-            openBatchAction(type, value, value > 0 ? '表現加分' : '扣分處理');
-        } else {
-            alert("儲存失敗：" + result.message);
-        }
-    } catch (e) {
-        alert("同步失敗！");
-    } finally {
-        showLoading(false);
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const btnBookView = document.querySelector('[onclick="switchView(\'view-book\')"]');
-    if (btnBookView) {
-        btnBookView.addEventListener("click", () => initBookCheck());
-    }
-});
