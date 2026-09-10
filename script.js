@@ -1,5 +1,5 @@
 // ✅【已為您填寫】您的 Google Apps Script Web App 網址
-const API_URL = "https://script.google.com/macros/s/AKfycbx5K8m7YQfcDbPuY81zqGoQJ5U1gUgoSG1QTCyQyQq79Yv2c-Mw_thmqTyrkykXeKPz5Q/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
 
 let currentClass = "";
 let studentList = [];
@@ -38,35 +38,22 @@ async function selectClass(className) {
     const title = className.includes('班') || className.includes('生物') ? `${className} 功能` : `${className}班 功能`;
     document.getElementById("app-title").textContent = title;
     showLoading(true);
-
     try {
         const response = await fetch(`${API_URL}?action=getStudents&className=${className}`);
-        
-        // 💡【超級除錯】我們先把回傳的原始文字印出來看看
-        const rawText = await response.text(); 
-        
-        try {
-            const rawData = JSON.parse(rawText);
-            if (rawData && Array.isArray(rawData)) {
-                studentList = rawData;
-                switchView("view-menu");
-            } else if (rawData && rawData.status === "error") {
-                // 如果是我們預期的錯誤格式，正常顯示
-                alert("後端 API 錯誤：" + rawData.message);
-                switchView("view-home");
-            } else {
-                // 如果格式不符預期，把原始資料印出來
-                alert("讀取失敗：收到的資料格式不正確。\n\n收到的原始資料：\n" + rawText);
-                switchView("view-home");
-            }
-        } catch (e) {
-            // 如果連 JSON 解析都失敗，代表回傳的根本不是 JSON
-            alert("讀取失敗：收到的資料不是有效的 JSON 格式。\n\n收到的原始資料：\n" + rawText);
+        const rawData = await response.json();
+        if (rawData && Array.isArray(rawData)) {
+            studentList = rawData;
+            switchView("view-menu");
+        } else if (rawData && rawData.status === "error") {
+            alert("讀取失敗：" + rawData.message);
+            switchView("view-home");
+        } else {
+            alert("讀取失敗：Google Sheet 回傳了空資料。請確認該 Sheet 內是否有學生名單。");
             switchView("view-home");
         }
-
     } catch (error) {
-        alert("網路連線失敗，無法連接到 Google Sheets API。\n\n錯誤詳情：\n" + error.toString());
+        console.error(error);
+        alert("連線 Google Sheets 失敗，請確認 API URL 是否正確，且 Apps Script 已重新部署為「所有人(Anyone)」可以存取。");
         switchView("view-home");
     } finally {
         showLoading(false);
@@ -117,8 +104,9 @@ async function submitBookCheck() {
         } catch (e) { console.error(e); }
     }
     showLoading(false);
-    alert(`成功儲存！已為 ${successCount} 位同學登記沒帶書並扣分。`);
-    selectClass(currentClass);
+    // 💡【已更新】移除確認彈窗
+    // alert(`成功儲存！已為 ${successCount} 位同學登記沒帶書並扣分。`);
+    await selectClass(currentClass);
 }
 
 function initLottery() {
@@ -160,7 +148,6 @@ function startDraw() {
 async function actionSelectedStudent(type, value) {
     if (!selectedStudent) return;
     if (value === 0) {
-        alert(`已記錄 ${selectedStudent.name} 的作答情況。`);
         initLottery();
         return;
     }
@@ -172,7 +159,8 @@ async function actionSelectedStudent(type, value) {
         });
         const result = await res.json();
         if (result.status === "success") {
-            alert(`已為 ${selectedStudent.name} 登記：${value > 0 ? '+' : ''}${value}分！`);
+            // 💡【已更新】移除確認彈窗
+            // alert(`已為 ${selectedStudent.name} 登記：${value > 0 ? '+' : ''}${value}分！`);
             await selectClass(currentClass);
             initLottery();
         } else {
@@ -217,7 +205,8 @@ async function submitSingleAction(name, type, value) {
         });
         const result = await res.json();
         if (result.status === "success") {
-            alert("儲存成功！");
+            // 💡【已更新】移除確認彈窗
+            // alert("儲存成功！");
             await selectClass(currentClass);
             openBatchAction(type, value, value > 0 ? '表現加分' : '扣分處理');
         } else {
