@@ -1,4 +1,4 @@
-// ⚠️ 請在此處貼上您從 Google Apps Script 複製的 Web App URL
+// ✅【已為您填寫】您的 Google Apps Script Web App 網址
 const API_URL = "https://script.google.com/macros/s/AKfycbxAkp1jbi_aPCIoNClC5g23mysJXb5jfn6yXfuNOwwygEsXRi0pRPhPS26L0iVtQZHJQg/exec"; 
 
 let currentClass = "";
@@ -54,7 +54,8 @@ async function selectClass(className) {
   showLoading(true);
   
   try {
-    const response = await fetch(`${API_URL}?action=getStudents&className=${encodeURIComponent(className)}`);
+    // 💡【已修正】直接傳送包含中文的班級名稱，不再進行編碼
+    const response = await fetch(`${API_URL}?action=getStudents&className=${className}`);
     const rawData = await response.json();
     
     if (rawData && Array.isArray(rawData)) {
@@ -100,7 +101,6 @@ function initBookCheck() {
     
     const displayName = getFormattedStudentName(student);
     
-    // 💡【已更新】移除總分顯示，只保留欠書次數
     item.innerHTML = `
       <div class="flex flex-col">
         <span class="font-bold text-slate-700 text-lg">${displayName}</span>
@@ -207,10 +207,9 @@ function startDraw() {
 async function actionSelectedStudent(type, value) {
   if (!selectedStudent) return;
   
-  // 💡【已更新】如果 value 是 0 (即答錯不扣分)，則不呼叫後端 API，直接重置畫面
   if (value === 0) {
     alert(`已記錄 ${selectedStudent.name} 的作答情況。`);
-    initLottery(); // 直接重置抽籤畫面
+    initLottery();
     return;
   }
   
@@ -254,7 +253,6 @@ function openBatchAction(type, value, title) {
     
     const displayName = getFormattedStudentName(student);
     
-    // 💡【已更新】移除總分顯示，讓版面更簡潔
     item.innerHTML = `
       <div class="flex flex-col">
         <span class="font-bold text-slate-700 text-lg">${displayName}</span>
